@@ -1,32 +1,38 @@
-import {
-  MongoClient,
-  ObjectId,
-} from "https://deno.land/x/mongo@v0.31.1/mod.ts";
-
-const client = async () => {
-  const client = new MongoClient();
-  const URI = "mongodb://127.0.0.1:27017";
-  await client.connect(URI);
-  return client;
-};
-
-const allTemplateRules = async (args: any) => {
-  const mongo = await client();
-  const db = mongo.database("coumon");
-  const laws = db.collection("laws");
-  return await laws.find(args).toArray();
-};
+import { client } from "./database.ts";
 
 export const resolvers = {
   Query: {
-    allTemplateRules: () =>
-      allTemplateRules({ prosecutor: "graphiteProsecutor", deleted: false }),
+    graphiteTemplateRules: () => {
+      const laws = client.database().collection("laws").find({
+        prosecutor: "graphiteProsecutor",
+      }).toArray();
+      return laws;
+    },
+    rulesByTemplateId: (filter: string) => {
+      return client.database().collection("rules").find({
+        law: filter,
+        deleted: false,
+      }).toArray();
+    },
   },
   TemplateRule: {
     param: (parent: any, filter: any) => {
-      return filter.name === undefined
+      return filter === undefined
         ? parent.param
         : parent.param.filter((param: any) => param.name === filter.name);
+    },
+    rules: (parent: any) => {
+      return client.database().collection("rules").find({
+        law_id: parent._id,
+        deleted: false,
+      }).toArray();
+    },
+  },
+  Rule: {
+    role: (parent: any) => {
+      return client.database().collection("roles").findOne({
+        _id: parent.role_id,
+      });
     },
   },
 };

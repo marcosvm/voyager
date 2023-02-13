@@ -1,0 +1,16 @@
+query {
+  graphiteTemplateRules { 
+    _id
+    name 
+    param(name: "metric") {
+      name
+      value
+    }
+    rules {
+      role {
+        name
+        cmdbId
+      }
+    }
+  }
+}
